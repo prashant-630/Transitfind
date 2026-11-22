@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TransitFind – Smart Transport Lost &amp; Found</title>
+<style>
+:root{--bg:#0a47c2;--bg2:#0b2f7e;--surface:#fff;--ink:#14213d;--muted:#5b667a;--line:#d9e0e8;--onbg:#fff;--acc:#0b57d0;--found:#0f8b8d;--lost:#d9482b;--claimed:#6b7280;--warn:#ffc93c;--r:16px;--shadow:0 8px 24px rgba(5,20,60,.22);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#081431;--bg2:#050c1f;--surface:#121f3d;--ink:#eaf0fa;--muted:#9aa8c0;--line:#2b3a58;--acc:#5b9bff;--found:#35b7b9;--lost:#ff8a6b;--shadow:0 8px 24px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg:#081431;--bg2:#050c1f;--surface:#121f3d;--ink:#eaf0fa;--muted:#9aa8c0;--line:#2b3a58;--acc:#5b9bff;--found:#35b7b9;--lost:#ff8a6b;--shadow:0 8px 24px rgba(0,0,0,.4)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;background:linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed;color:var(--ink);font:16px/1.5 "Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:21}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:8px;padding:12px 16px;max-width:1040px;margin:0 auto;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;color:var(--onbg);font-weight:800;font-size:1.25rem;cursor:pointer;background:none;border:0;font-family:inherit}
+.logo{width:36px;height:36px;border-radius:50%;background:#2f6fe4;display:grid;place-items:center;font-size:1.1rem}
+nav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;background:rgba(255,255,255,.14);padding:4px;border-radius:99px}
+nav button{border:0;background:none;color:var(--onbg);padding:8px 14px;border-radius:99px;font:600 .92rem inherit;font-family:inherit;cursor:pointer}
+nav button.on{background:var(--surface);color:var(--acc)}
+:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+main{max-width:1040px;margin:0 auto;padding:8px 16px 50px}
+h1,h2{color:var(--onbg);margin:18px 0 10px}h1{font-size:clamp(1.7rem,5vw,2.5rem);line-height:1.15}h2{font-size:1.3rem}
+.lead{color:var(--onbg);opacity:.9;max-width:58ch;margin:0}
+.card,.panel{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--line)}
+.panel{padding:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:18px 0}
+.stat{background:var(--surface);border-radius:14px;padding:14px;box-shadow:var(--shadow)}.stat b{display:block;font-size:1.8rem}.stat span{color:var(--muted);font-size:.88rem}
+.btn{display:inline-block;padding:11px 20px;border-radius:12px;border:0;background:var(--acc);color:#fff;font:700 1rem inherit;font-family:inherit;cursor:pointer;margin:12px 8px 0 0}
+.btn.w{background:#fff;color:#0b2f7e}.btn.l{background:var(--lost)}.btn.f{background:var(--found)}.btn.g{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.filters{display:grid;gap:10px 12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+label{display:block;font-weight:600;font-size:.88rem;margin:0 0 4px}label i{color:var(--lost);font-style:normal}
+input,select,textarea{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}textarea{min-height:80px;resize:vertical}
+.cnt{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.pill{background:rgba(255,255,255,.18);color:var(--onbg);padding:4px 14px;border-radius:99px;font-weight:700;font-size:.85rem}
+.list{display:grid;gap:14px}
+.it{display:flex;gap:14px;padding:14px;text-align:left;cursor:pointer;width:100%;color:inherit;font:inherit;animation:rise .35s ease both}
+.it:hover{transform:translateY(-2px)}
+.th{flex:none;width:96px;height:96px;border-radius:14px;background:var(--bg-t,#eef2f9);display:grid;place-items:center;font-size:2.6rem;overflow:hidden;border:1px solid var(--line)}.th img{width:100%;height:100%;object-fit:cover}
+.it h3{margin:0 0 4px;font-size:1.1rem}.meta{color:var(--muted);font-size:.9rem}
+.badge{display:inline-block;font-weight:700;font-size:.78rem;padding:2px 12px;border-radius:99px;color:#fff}
+.badge.Found{background:var(--found)}.badge.Lost{background:var(--lost)}.badge.Claimed{background:var(--claimed)}
+.row2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.empty{background:var(--surface);border-radius:var(--r);padding:28px;text-align:center;color:var(--muted)}
+.alert{background:#e5322d;color:#fff;border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin:14px 0}.alert b{display:block;margin-bottom:4px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:.8rem}
+.tw{overflow-x:auto}
+.bar{display:flex;align-items:center;gap:10px;margin:8px 0}.bar i{display:block;height:14px;border-radius:7px;background:var(--acc);min-width:4px}.bar span{width:70px;flex:none}
+dialog{border:0;border-radius:var(--r);padding:0;max-width:560px;width:calc(100% - 24px);background:var(--surface);color:var(--ink)}dialog::backdrop{background:rgba(5,10,20,.65)}
+.dlg{padding:18px;max-height:90vh;overflow:auto}.big{width:100%;max-height:260px;object-fit:cover;border-radius:12px}.bigE{height:170px;border-radius:12px;background:#eef2f9;display:grid;place-items:center;font-size:4.5rem}
+dl{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;margin:14px 0}dt{color:var(--muted);font-size:.9rem}dd{margin:0;font-weight:600}
+.err{color:var(--lost);font-weight:600;margin-top:10px}
+.dot{position:absolute;top:-4px;right:-4px;background:var(--lost);color:#fff;border-radius:99px;font:700 .68rem/1 sans-serif;padding:3px 6px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px}.tabs .btn{margin:0 6px 0 0;white-space:nowrap}
+.nt{display:flex;gap:10px;justify-content:space-between;padding:12px 14px;margin-bottom:8px;border-radius:12px;background:var(--surface);border-left:5px solid transparent;box-shadow:var(--shadow)}.nt.un{border-left-color:var(--warn)}
+.badge.Pending{background:#b7791f}
+.gate header,.gate footer{display:none}.gt{min-height:88vh;display:grid;grid-template-columns:1.1fr 1fr;gap:30px;align-items:center}.gl h1{margin:14px 0 8px}.gp{color:var(--onbg);padding:0;list-style:none;line-height:2.1;margin:16px 0 0}.gc{padding:22px}
+#main>*{animation:rise .45s ease both}
+.lh{display:grid;grid-template-columns:1.1fr 1fr;gap:30px;align-items:center;min-height:78vh}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.pills span{background:rgba(255,255,255,.16);color:var(--onbg);padding:6px 14px;border-radius:99px;font-weight:600;font-size:.9rem}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.fc{background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);transition:transform .2s}.fc:hover{transform:translateY(-4px)}.fc b{display:block;font-size:2rem}.fc h3{margin:6px 0 2px;font-size:1.05rem}.fc p{margin:0;color:var(--muted);font-size:.9rem}
+.cbar{position:sticky;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;margin-top:28px;z-index:5}.cbar .btn{padding:14px 44px;font-size:1.1rem;background:#ffc93c;color:#3a2d00;box-shadow:var(--shadow);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.lw{max-width:460px;margin:4vh auto}.lt{display:flex;gap:6px;background:var(--line);padding:4px;border-radius:99px;margin-bottom:14px}.lt button{flex:1;border:0;background:none;padding:9px;border-radius:99px;font:700 .92rem inherit;font-family:inherit;color:var(--ink);cursor:pointer}.lt button.on{background:var(--acc);color:#fff}
+@media(max-width:760px){.lh{grid-template-columns:1fr;min-height:0}}
+.demo{display:flex;gap:10px;margin-top:22px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:12px;max-width:470px}
+.dsb{display:grid;gap:4px;align-content:start;background:var(--surface);color:var(--ink);border-radius:12px;padding:8px;width:130px;flex:none;font-size:.78rem}
+.dsb span{padding:6px 8px;border-radius:8px;animation:hl 10s infinite}.dsb span:nth-child(2){animation-delay:2s}.dsb span:nth-child(3){animation-delay:4s}.dsb span:nth-child(4){animation-delay:6s}.dsb span:nth-child(5){animation-delay:8s}
+@keyframes hl{0%,18%{background:#dbe8ff;color:#0b57d0;font-weight:700}20%,100%{background:transparent}}
+.dmain{flex:1;display:grid;gap:8px;align-content:start;min-width:0}
+.dc{background:var(--surface);color:var(--ink);border-radius:10px;padding:9px 10px;font-size:.8rem;opacity:0;animation:cin 9s infinite}.dc.c2{animation-delay:1.5s}.dc.c3{animation-delay:3s}
+@keyframes cin{0%{opacity:0;transform:translateX(30px)}8%,80%{opacity:1;transform:none}92%,100%{opacity:0;transform:translateX(-20px)}}
+.dal{background:#e5322d;color:#fff;border-radius:10px;padding:9px 10px;font-size:.8rem;font-weight:700;opacity:0;animation:pop 9s 4.5s infinite}
+@keyframes pop{0%{opacity:0;transform:scale(.8)}8%,80%{opacity:1;transform:scale(1)}92%,100%{opacity:0}}
+.track{position:relative;height:46px;margin-top:20px;max-width:470px;overflow:hidden;border-bottom:3px dashed rgba(255,255,255,.5)}
+.track span{position:absolute;bottom:3px;left:-50px;font-size:1.8rem;transform:scaleX(-1);animation:run 9s linear infinite}.track span:nth-child(2){animation-duration:12s;animation-delay:-4s}.track span:nth-child(3){animation-duration:7s;animation-delay:-2s}
+@keyframes run{from{left:-50px}to{left:100%}}
+@media(prefers-reduced-motion:reduce){.dc,.dal{opacity:1!important}}
+@media(max-width:760px){.dsb{width:104px;font-size:.72rem}}.gc .btn{margin-top:12px}@media(max-width:760px){.gt{grid-template-columns:1fr;min-height:0;padding-top:12px}}
+.admx{display:grid;grid-template-columns:210px 1fr;gap:0 18px;align-items:start}.admx>.tabs{grid-row:1/span 30;grid-column:1;flex-direction:column;position:sticky;top:90px;background:var(--surface);padding:12px;border-radius:var(--r);box-shadow:var(--shadow);overflow:visible}.admx>*:not(.tabs){grid-column:2;min-width:0}
+@media(max-width:760px){.admx{grid-template-columns:1fr}.admx>.tabs{grid-row:auto;flex-direction:row;position:static;overflow-x:auto}.admx>*:not(.tabs){grid-column:1}.admx>.tabs .btn{width:auto!important;margin:0 6px 0 0!important}}.badge.Approved{background:var(--found)}.badge.Rejected{background:var(--lost)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:99;max-width:90vw}#toast.on{opacity:1}
+footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;color:var(--onbg);opacity:.75;font-size:.85rem;text-align:center}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media(max-width:560px){.th{width:78px;height:78px;font-size:2.1rem}dl{grid-template-columns:100px 1fr}}
+</style>
+</head>
+<body>
+<header>
+<button class="brand" data-a="go" data-v="home"><span class="logo">🚆</span>Transit<span style="color:#ffc93c">Find</span></button>
+<nav id="nav"></nav>
+<button class="btn w" style="margin:0;position:relative" data-a="go" data-v="notes" aria-label="Notifications">🔔<span class="dot" id="dot" hidden></span></button>
+<button class="btn w" style="margin:0" id="acct" data-a="acct">Log in</button>
+<button class="btn w" style="margin:0" data-a="theme" aria-label="Toggle dark mode">🌓</button>
+</header>
+<main id="main"></main>
+<footer>TransitFind · Smart Transport Lost &amp; Found · Demo data is stored only in this browser. · <button data-a="authsw" data-m="admin" style="background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit">Admin login</button></footer>
+<dialog id="dlg"><div class="dlg" id="dlgB"></div></dialog>
+<div id="toast" role="status"></div>
+<script>
+const sx=s=>s.split("|").map(x=>x+" Station"),sb=s=>s.split("|"),OT=["Other location"];
+const TR={Metro:{i:"🚇",g:{"Line 1 · Blue":sx("Versova|D N Nagar|Azad Nagar|Andheri|Western Express Highway|Chakala|Airport Road|Marol Naka|Saki Naka|Asalpha|Jagruti Nagar|Ghatkopar"),"Line 2A · Yellow":sx("Dahisar East|Anand Nagar|Kandarpada|Mandapeshwar|Eksar|Borivali West|Pahadi Eksar|Kandivali West|Dahanukarwadi|Valnai|Malad West|Lower Malad|Pahadi Goregaon|Goregaon West|Oshiwara|Lower Oshiwara|Andheri West"),"Line 3 · Aqua":sx("Aarey JVLR|SEEPZ|MIDC Andheri|CSMIA Terminal 2|Sahar Road|CSMIA Terminal 1|Santacruz|Vidyanagari|Bandra Kurla Complex|Dharavi|Sitladevi|Dadar|Siddhivinayak|Worli|Acharya Atre Chowk|Science Museum|Mahalaxmi|Mumbai Central|Grant Road|Girgaon|Kalbadevi|CSMT|Hutatma Chowk|Churchgate|Vidhan Bhavan|Cuffe Parade"),"Line 7 · Red":sx("Gundavali|Mogra|Jogeshwari East|Goregaon East|Aarey|Dindoshi|Kurar|Akurli|Poisar|Magathane|Devipada|Rashtriya Udyan|Ovaripada"),"Line 9 · Red (Mira Road)":sx("Pandurang Wadi|Miragaon|Kashigaon"),Other:OT}},
+Railway:{i:"🚆",g:{"Western Line":sx("Churchgate|Marine Lines|Charni Road|Grant Road|Mumbai Central|Mahalaxmi|Lower Parel|Prabhadevi|Dadar|Matunga Road|Mahim Junction|Bandra|Khar Road|Santacruz|Vile Parle|Andheri|Jogeshwari|Ram Mandir|Goregaon|Malad|Kandivali|Borivali|Dahisar|Mira Road|Bhayandar|Naigaon|Vasai Road|Nalasopara|Virar|Vaitarna|Saphale|Kelve Road|Palghar|Umroli|Boisar|Vangaon|Dahanu Road"),"Central Line":sx("CSMT|Masjid|Sandhurst Road|Byculla|Chinchpokli|Currey Road|Parel|Matunga|Sion|Kurla|Vidyavihar|Ghatkopar|Vikhroli|Kanjurmarg|Bhandup|Nahur|Mulund|Thane|Kalva|Mumbra|Diva|Kopar|Dombivli|Thakurli|Kalyan"),"Harbour Line":sx("Dockyard Road|Reay Road|Cotton Green|Sewri|Wadala Road|King's Circle|GTB Nagar|Chunabhatti|Tilak Nagar|Chembur|Govandi|Mankhurd|Vashi|Sanpada|Juinagar|Nerul|Seawoods-Darave|CBD Belapur|Kharghar|Mansarovar|Khandeshwar|Panvel"),"Trans-Harbour (Thane–Vashi)":sx("Airoli|Rabale|Ghansoli|Kopar Khairane|Turbhe"),Other:OT}},
+Bus:{i:"🚌",g:{"Major bus stands and ST depots":sb("Dadar Bus Stand|Mor Bhavan|Borivali Bus Stand|Kurla Depot|CSMT Bus Station|Mumbai Central ST Depot|Parel ST Depot|Bandra Bus Station|Andheri Bus Station|Ghatkopar Bus Station|Mulund Bus Station|Thane Bus Stand|Kalyan Bus Stand|Vashi Bus Depot|Panvel Bus Stand"),"BEST bus depots":sb("Colaba Depot|Backbay Depot|Worli Depot|Dharavi Depot|Wadala Depot|Sion Depot|Pratiksha Nagar Depot|Ghatkopar Depot|Vikhroli Depot|Mulund Depot|Magathane Depot|Dindoshi Depot|Malvani Depot|Oshiwara Depot|Goregaon Depot|Santacruz Depot|Bandra Depot|Borivali Depot"),Other:OT}}};
+const CI={Mobile:"📱",Wallet:"👛",Bag:"🎒",Documents:"📄",Watch:"⌚",Jewellery:"💍",Other:"📦"},CATS=Object.keys(CI),ST=["Lost","Found","Claimed"];
+const $=id=>document.getElementById(id);
+const demo=()=>[
+{id:1,name:"Black Wallet",tr:"Railway",loc:"CSMT Station",plat:"Platform 2",cat:"Wallet",date:"2026-10-30",time:"08:40",status:"Found",desc:"Black leather wallet found near the railway platform.",photo:"",who:"Station staff",phone:"0000000001"},
+{id:2,name:"Blue Backpack",tr:"Bus",loc:"Dadar Bus Stand",plat:"",cat:"Bag",date:"2026-10-29",time:"18:15",status:"Lost",desc:"Blue backpack with a laptop and notebooks, left on the bus.",photo:"",who:"Arjun",phone:"0000000002"},
+{id:3,name:"Samsung Phone",tr:"Metro",loc:"Andheri Station",plat:"Platform 1",cat:"Mobile",date:"2026-10-28",time:"21:05",status:"Found",desc:"Black Samsung smartphone found on a metro seat.",photo:"",who:"Metro staff",phone:"0000000003"},
+{id:4,name:"Silver Watch",tr:"Railway",loc:"Thane Station",plat:"Platform 4",cat:"Watch",date:"2026-10-27",time:"07:30",status:"Lost",desc:"Silver metal-strap wrist watch, lost on the platform.",photo:"",who:"Neha",phone:"0000000004"},
+{id:5,name:"Brown Handbag",tr:"Metro",loc:"Ghatkopar Station",plat:"",cat:"Bag",date:"2026-10-26",time:"19:50",status:"Found",desc:"Brown leather handbag found near the ticket counter.",photo:"",who:"Metro staff",phone:"0000000005"},
+{id:6,name:"Black Spectacles",tr:"Bus",loc:"Mor Bhavan",plat:"",cat:"Other",date:"2025-10-25".replace("2025","2026"),time:"09:10",status:"Lost",desc:"Black frame spectacles in a soft case.",photo:"",who:"Imran",phone:"0000000006"}];
+let D;try{D=JSON.parse(localStorage.getItem("tf.v3"))}catch(e){}
+D=D||{items:demo(),claims:[]};D.users=D.users||[];D.notes=D.notes||[];D.ann=D.ann||[];let me=null;try{me=JSON.parse(localStorage.getItem("tf.me3"))}catch(e){}
+const save=()=>{try{localStorage.setItem("tf.v3",JSON.stringify(D))}catch(e){toast("Storage is full. Use a smaller photo.")}};
+const E={tr:"All",cat:"All",loc:"All",st:"All",from:"",to:"",kw:""};let F={...E},view="home",photo="";
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fd=d=>new Date(d+"T00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("on");setTimeout(()=>t.classList.remove("on"),2600)};
+const opts=(a,sel,all)=>(all?`<option>${all}</option>`:"")+a.map(x=>`<option ${x===sel?"selected":""}>${esc(x)}</option>`).join("");
+const gopts=(t,sel,all)=>(all?`<option>${all}</option>`:"")+(t==="All"?Object.keys(TR):[t]).flatMap(m=>Object.entries(TR[m].g).map(([g,a])=>`<optgroup label="${(t==="All"?m+" · ":"")+g}">${opts(a,sel)}</optgroup>`)).join("");
+function pick(f,cb){if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,600/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=im.width*s;c.height=im.height*s;c.getContext("2d").drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.7))};im.src=r.result};r.readAsDataURL(f)}
+const thumb=i=>`<div class="th">${i.photo?`<img src="${i.photo}" alt="">`:CI[i.cat]||"📦"}</div>`;
+function card(i){return`<button class="card it" data-a="open" data-id="${i.id}">${thumb(i)}<div><h3>${esc(i.name)}</h3><span class="badge ${i.status}">${i.status}</span><div class="meta">${TR[i.tr].i} ${esc(i.tr)} · ${esc(i.loc)}</div><div class="meta">${i.plat?esc(i.plat)+" · ":""}${fd(i.date)}</div></div></button>`}
+function nav(){$("nav").innerHTML=(adm()?[["admin","Admin Panel"],["home","Home"],["search","Search"]]:[["home","Home"],["search","Search"],["report","Report"],["dash","Dashboard"],...(me?[["myr","My Reports"]]:[])]).map(([v,t])=>`<button class="${view===v?"on":""}" data-a="go" data-v="${v}">${t}</button>`).join("")}
+function go(v){if(!me&&!["gate","login"].includes(v)){go("login");return}if(v==="admin"&&!adm())return;view=v;document.body.classList.toggle('gate',['gate','login'].includes(v));nav();side();scrollTo(0,0);({home,search,report,dash,notes,admin,myr,gate,login:lgn})[v]()}
+ 
+function home(){const it=D.items,c=s=>it.filter(i=>i.status===s).length;
+$("main").innerHTML=`${D.ann[0]?`<div class="alert"><b>📢 Announcement</b>${esc(D.ann[0].text)}</div>`:""}<h1>Lost something while travelling?<br>Find it here.</h1><p class="lead">A public lost and found for metro, railway and bus travellers. Search found items, report what you lost, and claim what’s yours.</p>
+<button class="btn l" data-a="rep" data-k="Lost">I Lost Something</button><button class="btn f" data-a="rep" data-k="Found">I Found Something</button><button class="btn w" data-a="go" data-v="search">Search Items</button>
+<div class="stats"><div class="stat"><b>${it.length}</b><span>total reports</span></div><div class="stat"><b>${c("Lost")}</b><span>lost</span></div><div class="stat"><b>${c("Found")}</b><span>found</span></div><div class="stat"><b>${c("Claimed")}</b><span>claimed</span></div></div>
+<h2>Browse by transport</h2><div class="row2">${Object.keys(TR).map(t=>`<button class="card stat" style="text-align:left;cursor:pointer;color:inherit;font:inherit" data-a="tr" data-t="${t}"><b>${TR[t].i} ${t}</b><span>${it.filter(i=>i.tr===t).length} reports · tap to search</span></button>`).join("")}</div>
+<h2>Recently reported</h2><div class="list">${it.slice().reverse().slice(0,4).map(card).join("")}</div>`}
+ 
+function search(){
+$("main").innerHTML=`<h2>Search Items</h2><div class="panel"><div class="filters">
+<div><label for="fTr">Transport Type</label><select id="fTr" data-ch="loc">${opts(Object.keys(TR),F.tr,"All")}</select></div>
+<div><label for="fCat">Item Category</label><select id="fCat">${opts(CATS,F.cat,"All")}</select></div>
+<div><label for="fLoc">Location</label><select id="fLoc">${gopts(F.tr,F.loc,"All Stations")}</select></div>
+<div><label for="fSt">Status</label><select id="fSt">${opts(ST,F.st,"All")}</select></div>
+<div><label for="fFrom">Date from</label><input id="fFrom" type="date" value="${F.from}"></div>
+<div><label for="fTo">Date to</label><input id="fTo" type="date" value="${F.to}"></div>
+<div style="grid-column:1/-1"><label for="fKw">Keyword</label><input id="fKw" type="search" placeholder="Search by item name…" value="${esc(F.kw)}"></div></div>
+<button class="btn" data-a="apply">Apply Filters</button><button class="btn g" data-a="reset">Reset Filters</button></div>
+<div class="cnt"><h2>Search Results</h2><span class="pill" id="cnt"></span></div><div class="list" id="res"></div>`;results()}
+function results(){const k=F.kw.toLowerCase(),r=D.items.filter(i=>(F.tr==="All"||i.tr===F.tr)&&(F.cat==="All"||i.cat===F.cat)&&(F.loc==="All"||F.loc==="All Stations"||i.loc===F.loc)&&(F.st==="All"||i.status===F.st)&&(!F.from||i.date>=F.from)&&(!F.to||i.date<=F.to)&&(!k||(i.name+" "+i.desc+" "+i.loc).toLowerCase().includes(k)));
+$("cnt").textContent=r.length+" record"+(r.length===1?"":"s");$("res").innerHTML=r.map(card).join("")||'<div class="empty">No items match. Try resetting the filters.</div>'}
+ 
+function report(k){k=k||"Lost";photo="";
+$("main").innerHTML=`<h2>Report an Item</h2><form class="panel" id="rf" style="max-width:700px" onsubmit="return false"><div class="filters">
+<div><label for="rK">Report type <i>*</i></label><select id="rK">${opts(["Lost","Found"],k)}</select></div>
+<div><label for="rN">Item name <i>*</i></label><input id="rN" maxlength="60" placeholder="e.g. Black Wallet"></div>
+<div><label for="rTr">Transport type <i>*</i></label><select id="rTr" data-ch="rloc">${opts(Object.keys(TR),"Railway")}</select></div>
+<div><label for="rLoc">Station / Bus Stand <i>*</i></label><select id="rLoc">${gopts("Railway","")}</select></div>
+<div><label for="rP">Platform / Bay</label><input id="rP" placeholder="e.g. Platform 2"></div>
+<div><label for="rC">Category <i>*</i></label><select id="rC">${opts(CATS)}</select></div>
+<div><label for="rD">Date <i>*</i></label><input id="rD" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+<div><label for="rT">Time</label><input id="rT" type="time"></div></div>
+<label for="rDe" style="margin-top:12px">Description <i>*</i></label><textarea id="rDe" maxlength="300" placeholder="Colour, brand, marks, what’s inside…"></textarea>
+<div class="filters" style="margin-top:12px"><div><label for="rW">Your name <i>*</i></label><input id="rW" maxlength="40" value="${esc(me?me.name:'')}"></div><div><label for="rPh">Phone <i>*</i></label><input id="rPh" type="tel" maxlength="15" value="${esc(me?me.phone:'')}"></div></div>
+<label for="rPic" style="margin-top:12px">Item photo (optional)</label><input id="rPic" type="file" accept="image/*"><img id="pv" alt="Preview" style="display:none;max-height:130px;border-radius:10px;margin-top:8px">
+<div class="err" id="rE"></div><button class="btn" data-a="submit">Submit Report</button></form>`}
+ 
+function dash(){const it=D.items,mx=Math.max(1,...Object.keys(TR).map(t=>it.filter(i=>i.tr===t).length));
+$("main").innerHTML=`<h2>Dashboard</h2><div class="alert"><b>Safety tip</b>Never share OTPs or bank details to “claim” an item. Collect found items only from station staff or after proof checks.</div>
+<div class="stats"><div class="stat"><b>${it.length}</b><span>reports</span></div>${ST.map(s=>`<div class="stat"><b>${it.filter(i=>i.status===s).length}</b><span>${s}</span></div>`).join("")}</div>
+<div class="panel"><b>Reports by transport</b>${Object.keys(TR).map(t=>{const n=it.filter(i=>i.tr===t).length;return`<div class="bar"><span>${TR[t].i} ${t}</span><i style="width:${n/mx*60}%"></i>${n}</div>`}).join("")}</div>
+<h2>All reports</h2><div class="panel tw"><table><thead><tr><th>Item</th><th>Transport</th><th>Location</th><th>Date</th><th>Status</th></tr></thead><tbody>${it.slice().reverse().map(i=>`<tr><td><a href="#" data-a="open" data-id="${i.id}" style="color:var(--acc)">${esc(i.name)}</a></td><td>${i.tr}</td><td>${esc(i.loc)}</td><td>${fd(i.date)}</td><td><span class="badge ${i.status}">${i.status}</span></td></tr>`).join("")}</tbody></table></div>
+`}
+ 
+function detail(id){const i=D.items.find(x=>x.id===id);if(!i)return;
+$("dlgB").innerHTML=`${i.photo?`<img class="big" src="${i.photo}" alt="${esc(i.name)}">`:`<div class="bigE">${CI[i.cat]||"📦"}</div>`}
+<h2 style="color:var(--ink);margin:12px 0 4px">${esc(i.name)} <span class="badge ${i.status}">${i.status}</span></h2>
+<dl><dt>Category</dt><dd>${esc(i.cat)}</dd><dt>Transport</dt><dd>${TR[i.tr].i} ${esc(i.tr)}</dd><dt>Station / Stand</dt><dd>${esc(i.loc)}${i.plat?" · "+esc(i.plat):""}</dd><dt>Date and time</dt><dd>${fd(i.date)}${i.time?", "+esc(i.time):""}</dd><dt>Description</dt><dd style="font-weight:400">${esc(i.desc)}</dd><dt>Report status</dt><dd>${i.status}</dd><dt>Reported by</dt><dd>${esc(i.who)}</dd></dl>
+<div id="cf">${i.status==="Claimed"?'<p class="meta">This item has already been claimed.</p>':`<button class="btn" data-a="claimform" data-id="${i.id}">${i.status==="Found"?"Claim Item":"I Found This Item"}</button>`}<button class="btn g" data-a="close">Close</button></div>`;
+$("dlg").showModal()}
+function claimForm(id){$("cf").innerHTML=`<div class="tip meta">Describe something only the owner would know (marks, contents, lock screen…). Staff verify before handover.</div>
+<label for="cN">Your name</label><input id="cN" maxlength="40" value="${esc(me?me.name:'')}"><label for="cP" style="margin-top:8px">Phone</label><input id="cP" type="tel" maxlength="15" value="${esc(me?me.phone:'')}"><label for="cPr" style="margin-top:8px">Proof / details</label><textarea id="cPr" maxlength="250"></textarea><div class="err" id="cE"></div>
+<button class="btn" data-a="claim" data-id="${id}">Submit Claim</button><button class="btn g" data-a="close">Cancel</button>`}
+ 
+document.addEventListener("click",e=>{const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a,d=b.dataset;
+if(a==="go"){e.preventDefault();go(d.v)}
+else if(a==="theme"){const r=document.documentElement,dk=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;r.dataset.theme=dk?"light":"dark"}
+else if(a==="tr"){F={...E,tr:d.t};go("search")}
+else if(a==="rep"){if(!me)return authDlg("login","Please log in to report an item.");view="report";nav();scrollTo(0,0);report(d.k)}
+else if(a==="open"){e.preventDefault();detail(+d.id)}
+else if(a==="close")$("dlg").close();
+else if(a==="apply"){F={tr:$("fTr").value,cat:$("fCat").value,loc:$("fLoc").value,st:$("fSt").value,from:$("fFrom").value,to:$("fTo").value,kw:$("fKw").value.trim()};results()}
+else if(a==="reset"){F={...E};search()}
+else if(a==="claimform"){if(!me){$("dlg").close();authDlg("login","Please log in to claim an item.");return}claimForm(+d.id)}
+else if(a==="claim"){const n=$("cN").value.trim(),p=$("cP").value.trim(),pr=$("cPr").value.trim();if(!n||!p||pr.length<5){$("cE").textContent="Please fill in every field.";return}
+const i=D.items.find(x=>x.id===+d.id);if(D.claims.some(c=>c.item===i.id&&c.uid===me.id&&c.st==="Pending")){$("cE").textContent="You already have a pending claim for this item.";return}D.claims.push({id:uid(),item:i.id,uid:me.id,n,p,pr,st:"Pending",t:Date.now()});notify("admin",`New claim on "${i.name}" by ${n}`);notify(i.uid,`Someone submitted a claim on your report "${i.name}".`);notify(me.id,`Your claim on "${i.name}" is waiting for admin review.`);save();side();$("dlg").close();toast("Claim submitted. Admin will review it.");go(view)}
+else if(a==="submit"){const g=id=>$(id).value.trim(),v={name:g("rN"),desc:g("rDe"),who:g("rW"),phone:g("rPh"),date:g("rD")};
+if(!v.name||!v.desc||!v.who||!v.date||!/^[0-9+\s-]{7,15}$/.test(v.phone)){$("rE").textContent="Please fill all required fields with a valid phone number.";return}
+const n={id:Date.now(),...v,status:g("rK"),tr:g("rTr"),loc:g("rLoc"),plat:g("rP"),cat:g("rC"),time:g("rT"),photo,uid:me.id};D.items.push(n);notify("admin",`New ${n.status.toLowerCase()} report: ${n.name} (${n.loc})`);D.items.filter(o=>o.uid&&o.status!==n.status&&o.status!=="Claimed"&&o.cat===n.cat&&o.tr===n.tr&&(o.loc===n.loc||Math.abs(new Date(o.date)-new Date(n.date))<=3*864e5)).forEach(o=>{notify(o.uid,`Possible match for your "${o.name}": "${n.name}" at ${n.loc}.`);notify(me.id,`Possible match for your "${n.name}": "${o.name}" at ${o.loc}.`)});save();side();F={...E};toast("Report submitted.");go("search")}
+else if(a==="resetdemo"){D={items:demo(),claims:[]};save();toast("Demo data restored.");dash()}});
+document.addEventListener("change",e=>{const t=e.target;
+if(t.dataset.ch==="loc"){$("fLoc").innerHTML=gopts(t.value,"","All Stations")}
+else if(t.dataset.ch==="rloc"){$("rLoc").innerHTML=gopts(t.value,"")}
+else if(t.id==="rPic")pick(t.files[0],u=>{photo=u;const p=$("pv");p.src=u;p.style.display="block"})});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="fKw")document.querySelector("[data-a=apply]").click()});
+/* ===== ACCOUNTS, NOTIFICATIONS, ADMIN ===== */
+const adm=()=>me&&me.role==='admin',uid=()=>Date.now()+Math.floor(Math.random()*1000);
+const ago=t=>{const m=Math.round((Date.now()-t)/6e4);return m<1?'just now':m<60?m+' min ago':m<1440?Math.round(m/60)+' h ago':Math.round(m/1440)+' days ago'};
+async function hash(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of s)h=((h<<5)+h+c.charCodeAt(0))|0;return 'f'+(h>>>0).toString(16)}}
+const setMe=u=>{me=u?{id:u.id,name:u.name,email:u.email,phone:u.phone,role:u.role}:null;try{u?localStorage.setItem('tf.me3',JSON.stringify(me)):localStorage.removeItem('tf.me3')}catch(e){}};
+const mine=()=>me?D.notes.filter(n=>n.to===me.id||(adm()&&n.to==='admin')):[];
+function notify(to,text){if(!to)return;D.notes.unshift({id:uid(),to,text,t:Date.now(),read:false});save()}
+function side(){const n=mine().filter(x=>!x.read).length,d=$('dot');d.hidden=!n;d.textContent=n;$('acct').textContent=me?me.name.split(' ')[0]+' · Log out':'Log in'}
+function authDlg(m,msg){const r=m==='register'||m==='adminreg',ar=m==='adminreg';$('dlgB').innerHTML=`<h2 style='color:var(--ink);margin:0 0 8px'>${ar?'Admin Registration':r?'Create account':m==='admin'?'Admin Login':'Public Login'}</h2>${msg?`<p class='meta'>${esc(msg)}</p>`:''}${r?`<label for='aN'>Full name</label><input id='aN' maxlength='40' autocomplete='name'><label for='aP' style='margin-top:8px'>Phone</label><input id='aP' type='tel' maxlength='15' autocomplete='tel'>`:''}<label for='aE' style='margin-top:8px'>Email</label><input id='aE' type='email' autocomplete='email'><label for='aW' style='margin-top:8px'>Password</label><input id='aW' type='password' autocomplete='${r?'new-password':'current-password'}' placeholder='At least 6 characters'>${r?`<label for='aQ' style='margin-top:8px'>Security question (used if you forget your password)</label><select id='aQ'><option>What was your first school name?</option><option>What is your favourite station?</option><option>What is your pet name?</option><option>In which town was your mother born?</option></select><input id='aA' placeholder='Your answer' maxlength='40' style='margin-top:6px'>`:''}${m==='login'||m==='admin'?`<div style='text-align:right;margin-top:6px'><button class='btn g' style='padding:4px 10px;margin:0;font-size:.82rem' data-a='forgot' data-m='${m}'>Forgot password?</button></div>`:''}${ar?`<label for='aC' style='margin-top:8px'>Admin access code</label><input id='aC' type='password' autocomplete='off'>`:''}<div class='err' id='aR'></div><button class='btn' data-a='doauth' data-m='${m}'>${r?'Register':'Log in'}</button>${m==='admin'||ar?`<button class='btn g' data-a='authsw' data-m='login'>Public login</button>${ar?`<button class='btn g' data-a='authsw' data-m='admin'>Admin login</button>`:`<button class='btn g' data-a='authsw' data-m='adminreg'>Register as admin</button>`}`:`<button class='btn g' data-a='authsw' data-m='${r?'login':'register'}'>${r?'I have an account':'New here? Register'}</button>${r?'':`<button class='btn g' data-a='authsw' data-m='admin'>Admin login</button>`}`}`;if(view==='login'){$('gf').innerHTML=$('dlgB').innerHTML;$('dlgB').innerHTML='';const ad=['admin','adminreg'].includes(m);document.querySelectorAll('.lt button').forEach(b=>b.classList.toggle('on',(b.dataset.m==='admin')===ad));return}if(!$('dlg').open)$('dlg').showModal()}
+async function doAuth(m){const g=id=>$(id)?$(id).value.trim():'',e=g('aE').toLowerCase(),w=$('aW').value.trim(),er=t=>{$('aR').textContent=t};
+if(!/^\S+@\S+\.\S+$/.test(e)||w.length<6)return er('Enter a valid email and a password of 6+ characters.');const h=await hash(w);
+if(m==='register'||m==='adminreg'){const ar=m==='adminreg';if(ar&&await hash(g('aC'))!==D.acode)return er('Wrong admin access code.');const n=g('aN'),p=g('aP');if(n.length<2||!/^[0-9+\s-]{7,15}$/.test(p))return er('Enter your name and a valid phone number.');if(D.users.some(u=>u.email===e))return er('That email is already registered.');if(!g('aA'))return er('Please answer the security question.');const u={id:uid(),name:n,email:e,phone:p,role:ar?'admin':'user',pw:h,sq:$('aQ').value,sa:await hash(g('aA').toLowerCase()),t:Date.now()};D.users.push(u);notify('admin',(ar?'New admin registered: ':'New user registered: ')+n);save();toast('Account created.');authDlg(ar?'admin':'login','Account created. Please log in.');return}
+else{const u=D.users.find(x=>x.email===e&&x.pw===h);if(!u)return er(D.users.some(x=>x.email===e)?'Wrong password. Use Forgot password if needed.':'No account found with this email. Please register first.');if(m==='admin'&&u.role!=='admin')return er('This is not an admin account.');if(m==='login'&&u.role==='admin')return er('Admin accounts must use Admin Login.');setMe(u);toast('Logged in.')}
+$('dlg').close();side();go(adm()?'admin':['gate','login'].includes(view)?'home':view)}
+function notes(){const l=mine();$('main').innerHTML=`<div class='cnt'><h2>Notifications</h2><button class='btn w' style='margin:0' data-a='readall'>Mark all read</button></div>${l.map(n=>`<div class='nt ${n.read?'':'un'}'><span>${esc(n.text)}</span><span class='meta'>${ago(n.t)}</span></div>`).join('')||`<div class='empty'>No notifications yet.</div>`}`}
+let at='over';
+function admin(){const it=D.items,pc=D.claims.filter(c=>c.st==='Pending'),gh="color:var(--onbg);border-color:rgba(255,255,255,.4)";
+const T=[['over','Overview'],['claims','Claims ('+pc.length+')'],['reports','Reports'],['users','Users'],['ann','Announce']];
+let h=`<h2>Admin Panel</h2><div class='tabs'>${T.map(([k,t])=>`<button class='btn ${at===k?'':'g'}' style='text-align:left;width:100%;margin:0 0 6px' data-a='atab' data-k='${k}'>${t}</button>`).join('')}</div>`;
+if(at==='over')h+=`<div class='stats'>${[['Users',D.users.length],['Reports',it.length],['Pending claims',pc.length],['Claimed',it.filter(i=>i.status==='Claimed').length]].map(([t,n])=>`<div class='stat'><b>${n}</b><span>${t}</span></div>`).join('')}</div><div class='panel'><b>Latest activity</b>${D.notes.filter(n=>n.to==='admin').slice(0,8).map(n=>`<div class='meta' style='padding:6px 0;border-bottom:1px solid var(--line)'>${esc(n.text)} · ${ago(n.t)}</div>`).join('')||`<p class='meta'>Nothing yet.</p>`}</div><div class='panel' style='margin:12px 0'><b>Admin access code</b><p class='meta'>New admins need this code to register. Change it often and share it only with people you trust.</p><input id='nC' type='text' placeholder='New code (min 8 characters)' maxlength='40'><div class='err' id='nE'></div><button class='btn' data-a='setcode'>Update code</button></div><button class='btn g' style='${gh}' data-a='reset2'>Reset demo data</button>`;
+if(at==='claims')h+=D.claims.slice().reverse().map(c=>{const i=it.find(x=>x.id===c.item)||{name:'(removed item)'};return`<div class='panel' style='margin-bottom:10px'><b>${esc(i.name)}</b> <span class='badge ${c.st}'>${c.st}</span><div class='meta'>By ${esc(c.n)} · ${esc(c.p)} · ${ago(c.t)}</div><p style='margin:8px 0 0'>${esc(c.pr)}</p>${c.st==='Pending'?`<button class='btn f' style='padding:7px 14px;margin:8px 8px 0 0' data-a='appr' data-id='${c.id}'>Approve</button><button class='btn l' style='padding:7px 14px;margin:8px 0 0' data-a='rej' data-id='${c.id}'>Reject</button>`:''}</div>`}).join('')||`<div class='empty'>No claims yet.</div>`;
+if(at==='reports')h+=`<div class='panel tw'><table><thead><tr><th>Item</th><th>Status</th><th>Transport</th><th>Location</th><th></th></tr></thead><tbody>${it.slice().reverse().map(i=>`<tr><td>${esc(i.name)}</td><td><span class='badge ${i.status}'>${i.status}</span></td><td>${i.tr}</td><td>${esc(i.loc)}</td><td><button class='btn g' style='padding:4px 10px;margin:0' data-a='delit' data-id='${i.id}'>Delete</button></td></tr>`).join('')}</tbody></table></div>`;
+if(at==='users')h+=`<div class='panel tw'><table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th></th></tr></thead><tbody>${D.users.map(u=>`<tr><td>${esc(u.name)}</td><td>${esc(u.email)}</td><td>${esc(u.phone)}</td><td>${u.role}</td><td>${u.role==='admin'?'':`<button class='btn g' style='padding:4px 10px;margin:0' data-a='deluser' data-id='${u.id}'>Remove</button><button class='btn g' style='padding:4px 10px;margin:0 0 0 6px' data-a='resetpw' data-id='${u.id}'>Reset password</button>`}</td></tr>`).join('')}</tbody></table></div>`;
+if(at==='ann')h+=`<div class='panel'><label for='anT'>New announcement (sent to all users)</label><textarea id='anT' maxlength='200'></textarea><button class='btn' data-a='post'>Post announcement</button></div>${D.ann.map(x=>`<div class='nt' style='margin-top:8px'><span>${esc(x.text)}</span><button class='btn g' style='padding:4px 10px;margin:0' data-a='delann' data-id='${x.id}'>Delete</button></div>`).join('')}`;
+$('main').innerHTML=`<div class='admx'>${h}</div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,d=b.dataset,id=+d.id;
+if(a==='cont')go(me?(adm()?'admin':'home'):'login');
+else if(a==='acct'){if(me){setMe(null);side();toast('Logged out.');go('gate')}else authDlg('login')}
+else if(a==='authsw')authDlg(d.m);else if(a==='doauth')doAuth(d.m);
+else if(a==='readall'){mine().forEach(n=>n.read=true);save();side();notes()}
+else if(adm()&&['atab','appr','rej','delit','deluser','reset2'].includes(a)){
+if(a==='atab')at=d.k;
+else if(a==='appr'||a==='rej'){const c=D.claims.find(x=>x.id===id);if(!c)return;const i=D.items.find(x=>x.id===c.item),nm=i?i.name:'item';
+if(a==='appr'){c.st='Approved';if(i){i.status='Claimed';D.claims.filter(x=>x.item===c.item&&x.st==='Pending').forEach(x=>{x.st='Rejected';notify(x.uid,`Your claim on "${nm}" was not approved.`)});notify(i.uid,`The item "${nm}" from your report was claimed.`)}notify(c.uid,`Your claim on "${nm}" was approved. Collect it from station staff with a photo ID.`)}
+else{c.st='Rejected';notify(c.uid,`Your claim on "${nm}" was not approved.`)}}
+else if(a==='delit'){D.items=D.items.filter(x=>x.id!==id);D.claims=D.claims.filter(x=>x.item!==id)}
+else if(a==='deluser')D.users=D.users.filter(x=>x.id!==id);
+else if(a==='reset2'){D.items=demo();D.claims=[]}
+save();side();admin()}});
+function gate(){const sc=Object.values(TR).flatMap(m=>Object.entries(m.g).filter(([k])=>k!=='Other').flatMap(([k,a])=>a)).length;$('main').innerHTML=`<div class='lp'><div class='lh'><div><div class='logo' style='width:58px;height:58px;font-size:1.9rem'>🚆</div><h1>Transit<span style='color:#ffc93c'>Find</span></h1><p class='lead'>Lost something on the metro, train or bus? Search, report and claim items across Mumbai.</p><ul class='gp'><li>🔎 Search found items by station</li><li>📝 Report lost or found items</li><li>🔔 Get alerts when something matches</li></ul></div><div><div class='demo' aria-hidden='true'><div class='dsb'><span>🏠 Home</span><span>🔎 Search</span><span>📝 Report</span><span>📊 Dashboard</span><span>🔔 Alerts</span></div><div class='dmain'><div class='dc'>👛 Black Wallet · Found · CSMT Station</div><div class='dc c2'>📱 Samsung Phone · Found · Andheri</div><div class='dc c3'>🎒 Blue Backpack · Lost · Dadar Bus Stand</div><div class='dal'>🔔 Possible match found!</div></div></div><div class='track' aria-hidden='true'><span>🚆</span><span>🚌</span><span>🚇</span></div></div></div>
+<div class='stats'><div class='stat'><b data-n='${sc}'>0</b><span>stations covered</span></div><div class='stat'><b data-n='3'>0</b><span>transport types</span></div><div class='stat'><b data-n='${D.items.length}'>0</b><span>items reported</span></div><div class='stat'><b data-n='${D.items.filter(i=>i.status==='Claimed').length}'>0</b><span>items returned</span></div></div>
+<h2>Why TransitFind?</h2><div class='fgrid'>${[['🔎','Smart search','Filter by transport, station, category, date and keyword.'],['📝','Quick reports','Report a lost or found item with a photo in under a minute.'],['🔔','Match alerts','Get notified when a report may match yours.'],['🛡️','Verified claims','An admin checks every claim before handover.'],['🔐','Secure accounts','Register, log in and recover your password.'],['📱','Any device','Works on phones, tablets and laptops, in dark mode too.']].map(([i,t,p])=>`<div class='fc'><b>${i}</b><h3>${t}</h3><p>${p}</p></div>`).join('')}</div>
+<h2>How it works</h2><div class='fgrid'>${[['1','Register','Create your free account.'],['2','Report or search','Post what you lost or found, or search the list.'],['3','Claim and collect','Submit a claim, get approval and collect your item.']].map(([i,t,p])=>`<div class='fc'><b>${i}</b><h3>${t}</h3><p>${p}</p></div>`).join('')}</div>
+<div class='cbar'><button class='btn' data-a='cont'>${me?'Continue as '+esc(me.name.split(' ')[0]):'Continue'} →</button></div></div>`;
+document.querySelectorAll('[data-n]').forEach(el=>{const n=+el.dataset.n,s=Math.max(1,Math.ceil(n/40));let c=0;const t=setInterval(()=>{c=Math.min(n,c+s);el.textContent=c;if(c>=n)clearInterval(t)},35)})}
+function myr(){const l=D.items.filter(i=>i.uid===me.id),c=D.claims.filter(x=>x.uid===me.id);
+$('main').innerHTML=`<h2>My Reports</h2>${l.map(i=>`<div class='panel' style='margin-bottom:10px'><b>${esc(i.name)}</b> <span class='badge ${i.status}'>${i.status}</span><div class='meta'>${TR[i.tr].i} ${esc(i.loc)} · ${fd(i.date)}</div><button class='btn' style='padding:6px 12px;margin:8px 6px 0 0' data-a='edit' data-id='${i.id}'>Edit</button>${i.status!=='Claimed'?`<button class='btn f' style='padding:6px 12px;margin:8px 6px 0 0' data-a='resolve' data-id='${i.id}'>Mark resolved</button>`:''}<button class='btn g' style='padding:6px 12px;margin:8px 0 0' data-a='mydel' data-id='${i.id}'>Delete</button></div>`).join('')||`<div class='empty'>You have not reported anything yet.</div>`}<h2>My Claims</h2>${c.map(x=>{const i=D.items.find(y=>y.id===x.item);return`<div class='panel' style='margin-bottom:10px'><b>${esc(i?i.name:'(removed item)')}</b> <span class='badge ${x.st}'>${x.st}</span> <span class='meta'>${ago(x.t)}</span></div>`}).join('')||`<div class='empty'>No claims yet.</div>`}`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||!me)return;const a=b.dataset.a,id=+b.dataset.id,i=D.items.find(x=>x.id===id),own=i&&(i.uid===me.id||adm());
+if(a==='edit'&&own){$('dlgB').innerHTML=`<h2 style='color:var(--ink);margin:0 0 8px'>Edit report</h2><label for='eN'>Item name</label><input id='eN' maxlength='60' value='${esc(i.name)}'><label for='eP' style='margin-top:8px'>Platform / Bay</label><input id='eP' value='${esc(i.plat)}'><label for='eD' style='margin-top:8px'>Description</label><textarea id='eD' maxlength='300'>${esc(i.desc)}</textarea><div class='err' id='eE'></div><button class='btn' data-a='saveedit' data-id='${i.id}'>Save</button><button class='btn g' data-a='close'>Cancel</button>`;$('dlg').showModal()}
+else if(a==='saveedit'&&own){const n=$('eN').value.trim(),dd=$('eD').value.trim();if(!n||!dd){$('eE').textContent='Name and description are required.';return}i.name=n;i.plat=$('eP').value.trim();i.desc=dd;save();$('dlg').close();toast('Report updated.');go(view)}
+else if(a==='resolve'&&own){i.status='Claimed';save();toast('Marked as resolved.');go(view)}
+else if(a==='mydel'&&own){D.items=D.items.filter(x=>x.id!==id);D.claims=D.claims.filter(x=>x.item!==id);save();toast('Report deleted.');go(view)}
+else if(adm()){if(a==='post'){const t=$('anT').value.trim();if(!t)return;D.ann.unshift({id:uid(),text:t,t:Date.now()});D.users.filter(u=>u.role!=='admin').forEach(u=>notify(u.id,'📢 '+t));save();toast('Announcement posted.');admin()}
+else if(a==='setcode'){const c=$('nC').value.trim();if(c.length<8){$('nE').textContent='Use at least 8 characters.';return}hash(c).then(h=>{D.acode=h;save();toast('Access code updated.');admin()})}
+else if(a==='delann'){D.ann=D.ann.filter(x=>x.id!==id);save();admin()}
+else if(a==='resetpw'){const u=D.users.find(x=>x.id===id);if(!u)return;const tp=Math.random().toString(36).slice(2,10);hash(tp).then(h=>{u.pw=h;save();notify(u.id,'An admin reset your password. Log in with the temporary password you were given.');$('dlgB').innerHTML=`<h2 style='color:var(--ink);margin:0 0 8px'>Temporary password</h2><p>Give this to ${esc(u.name)}: <b>${tp}</b></p><button class='btn' data-a='close'>Done</button>`;$('dlg').showModal()})}}});
+function lgn(){$('main').innerHTML=`<div class='lw'><button class='btn g' style='color:var(--onbg);border-color:rgba(255,255,255,.4);margin:0 0 12px' data-a='go' data-v='gate'>← Back</button><div class='panel'><div class='lt'><button data-a='authsw' data-m='login' class='on'>👤 Public</button><button data-a='authsw' data-m='admin'>🛡️ Admin</button></div><div id='gf'></div></div><p class='lead' style='font-size:.85rem;margin-top:10px'>New here? Choose Public, then Register. Only registered users can log in.</p><button class='btn g' style='color:var(--onbg);border-color:rgba(255,255,255,.4);padding:6px 12px;font-size:.82rem' data-a='wipe'>Trouble logging in? Reset app data</button></div>`;authDlg('login')}
+function forgot(m,st,email){const ad=m==='admin',u=email?D.users.find(x=>x.email===email):null;
+let h=`<h2 style='color:var(--ink);margin:0 0 8px'>Forgot password</h2>`;
+if(!st)h+=`<p class='meta'>Enter the email you registered with.</p><label for='fE'>Email</label><input id='fE' type='email' autocomplete='email'><div class='err' id='fR'></div><button class='btn' data-a='fnext' data-m='${m}'>Next</button>`;
+else h+=(ad?`<p class='meta'>Admins reset their password with the Admin access code.</p><label for='fA'>Admin access code</label><input id='fA' type='password' autocomplete='off'>`:`<p class='meta'>Answer your security question:</p><p><b>${esc(u.sq)}</b></p><label for='fA'>Your answer</label><input id='fA' autocomplete='off'>`)+`<label for='fP' style='margin-top:8px'>New password</label><input id='fP' type='password' autocomplete='new-password' placeholder='At least 6 characters'><div class='err' id='fR'></div><button class='btn' data-a='freset' data-m='${m}' data-e='${esc(email)}'>Reset password</button>`;
+h+=`<button class='btn g' data-a='authsw' data-m='${m}'>Back to login</button>`;
+$('dlgB').innerHTML=h;if(view==='login'){$('gf').innerHTML=h;$('dlgB').innerHTML=''}else if(!$('dlg').open)$('dlg').showModal()}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,m=b.dataset.m;
+if(a==='wipe'){D={items:demo(),claims:[],users:[],notes:[],ann:[]};setMe(null);await seed();save();toast('App data reset. Admin: admin@transitfind.in / Admin@123');authDlg('login')}
+else if(a==='forgot')forgot(m==='admin'?'admin':'login');
+else if(a==='fnext'){const em=$('fE').value.trim().toLowerCase(),u=D.users.find(x=>x.email===em),er=t=>{$('fR').textContent=t};
+if(!u||(m==='admin')!==(u.role==='admin'))return er('No account found with that email in this section.');
+if(m!=='admin'&&!u.sq)return er('This account has no security question. Ask an admin to reset your password.');forgot(m,1,em)}
+else if(a==='freset'){const u=D.users.find(x=>x.email===b.dataset.e),er=t=>{$('fR').textContent=t},np=$('fP').value.trim(),ans=$('fA').value.trim();
+if(!u)return;if(np.length<6)return er('New password must be 6+ characters.');
+const ok=m==='admin'?await hash(ans)===D.acode:await hash(ans.toLowerCase())===u.sa;
+if(!ok)return er(m==='admin'?'Wrong admin access code.':'Wrong answer.');
+u.pw=await hash(np);save();toast('Password updated. Please log in.');authDlg(m==='admin'?'admin':'login','Password updated. Please log in.')}});
+async function seed(){if(!D.acode){D.acode=await hash('TRANSIT-ADMIN-2026');save()}if(!D.users.some(u=>u.role==='admin')){D.users.push({id:1,name:'Admin',email:'admin@transitfind.in',phone:'0000000000',role:'admin',pw:await hash('Admin@123'),t:Date.now()});save()}}
+seed().then(()=>{side();go('gate')});
+</script>
+</body>
+</html>
